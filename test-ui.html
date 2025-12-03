@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Hotline Test Console</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .config-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .config-section h2 {
+            margin-bottom: 15px;
+            color: #00d4ff;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .config-item label {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .config-item input {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .service-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .service-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .status-dot.online { background: #00ff88; }
+        .status-dot.offline { background: #ff4444; }
+        .status-dot.loading { background: #ffaa00; animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .test-section {
+            margin-top: 15px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,212,255,0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .response-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .audio-player {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .chat-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 12px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #7c3aed;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            background: rgba(0,212,255,0.2);
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .logs {
+            background: #000;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-entry.info { color: #00d4ff; }
+        .log-entry.success { color: #00ff88; }
+        .log-entry.error { color: #ff4444; }
+        .log-entry.warn { color: #ffaa00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ AI Hotline Test Console</h1>
+
+        <!-- Configuration Section -->
+        <div class="config-section">
+            <h2>⚙️ Service URLs</h2>
+            <div class="config-grid">
+                <div class="config-item">
+                    <label>RunPod Base URL</label>
+                    <input type="text" id="runpodUrl" placeholder="https://xxxxx.proxy.runpod.net" value="">
+                </div>
+                <div class="config-item">
+                    <label>TTS Port</label>
+                    <input type="text" id="ttsPort" value="5000">
+                </div>
+                <div class="config-item">
+                    <label>Webhook Port</label>
+                    <input type="text" id="webhookPort" value="8080">
+                </div>
+                <div class="config-item">
+                    <label>Ollama Port</label>
+                    <input type="text" id="ollamaPort" value="11434">
+                </div>
+            </div>
+            <button class="btn-secondary" onclick="saveConfig()" style="margin-top: 15px;">💾 Save Config</button>
+            <button class="btn-primary" onclick="checkAllServices()" style="margin-top: 15px;">🔍 Check All Services</button>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="services-grid">
+            <!-- TTS Service -->
+            <div class="service-card">
+                <h3><span class="status-dot" id="tts-status"></span> XTTS-v2 TTS</h3>
+                <p style="color: #aaa; margin-bottom: 15px;">Text-to-Speech Engine</p>
+                <div class="test-section">
+                    <textarea id="tts-text" placeholder="Enter text to synthesize...">Hello! This is a test of the text to speech system.</textarea>
+                    <button class="btn-primary" onclick="testTTS()">🔊 Generate Speech</button>
+                    <audio id="tts-audio" class="audio-player" controls style="display: none;"></audio>
+                    <div class="response-box" id="tts-response" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Ollama/LLM Service -->
+            <div class="service-card">
+                <h3><span class="status-dot" id="llm-status"></span> Ollama (Llama 3.1)</h3>
+                <p style="color: #aaa; margin-bottom: 15px;">Large Language Model</p>
+                <div class="test-section">
+                    <textarea id="llm-prompt" placeholder="Enter a prompt...">What is the capital of France?</textarea>
+                    <button class="btn-primary" onclick="testLLM()">🤖 Get Response</button>
+                    <div class="response-box" id="llm-response" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Webhook Service -->
+            <div class="service-card">
+                <h3><span class="status-dot" id="webhook-status"></span> Webhook Server</h3>
+                <p style="color: #aaa; margin-bottom: 15px;">Twilio/Jambonz Handler</p>
+                <div class="test-section">
+                    <button class="btn-secondary" onclick="testWebhookHealth()">❤️ Health Check</button>
+                    <button class="btn-primary" onclick="simulateCall()">📞 Simulate Call</button>
+                    <div class="response-box" id="webhook-response" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Full Pipeline Test -->
+            <div class="service-card">
+                <h3><span class="status-dot" id="pipeline-status"></span> Full Pipeline</h3>
+                <p style="color: #aaa; margin-bottom: 15px;">ASR → LLM → TTS</p>
+                <div class="test-section">
+                    <textarea id="pipeline-text" placeholder="Simulate user speech...">Tell me a short joke</textarea>
+                    <button class="btn-primary" onclick="testFullPipeline()">🚀 Test Full Flow</button>
+                    <audio id="pipeline-audio" class="audio-player" controls style="display: none;"></audio>
+                    <div class="response-box" id="pipeline-response" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div class="chat-container">
+            <h2 style="margin-bottom: 15px;">💬 Voice Chat Simulator</h2>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input">
+                <input type="text" id="chat-input" placeholder="Type a message (simulating speech)..." onkeypress="if(event.key==='Enter')sendChatMessage()">
+                <button class="btn-primary" onclick="sendChatMessage()">Send</button>
+                <button class="btn-secondary" onclick="clearChat()">Clear</button>
+            </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="logs" id="logs">
+            <div class="log-entry info">[System] Test console loaded. Configure your RunPod URL above.</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        let config = {
+            runpodUrl: localStorage.getItem('runpodUrl') || '',
+            ttsPort: localStorage.getItem('ttsPort') || '5000',
+            webhookPort: localStorage.getItem('webhookPort') || '8080',
+            ollamaPort: localStorage.getItem('ollamaPort') || '11434'
+        };
+
+        // Load saved config
+        document.getElementById('runpodUrl').value = config.runpodUrl;
+        document.getElementById('ttsPort').value = config.ttsPort;
+        document.getElementById('webhookPort').value = config.webhookPort;
+        document.getElementById('ollamaPort').value = config.ollamaPort;
+
+        function saveConfig() {
+            config.runpodUrl = document.getElementById('runpodUrl').value.replace(/\/$/, '');
+            config.ttsPort = document.getElementById('ttsPort').value;
+            config.webhookPort = document.getElementById('webhookPort').value;
+            config.ollamaPort = document.getElementById('ollamaPort').value;
+
+            localStorage.setItem('runpodUrl', config.runpodUrl);
+            localStorage.setItem('ttsPort', config.ttsPort);
+            localStorage.setItem('webhookPort', config.webhookPort);
+            localStorage.setItem('ollamaPort', config.ollamaPort);
+
+            log('Config saved!', 'success');
+        }
+
+        function getServiceUrl(port) {
+            if (!config.runpodUrl) {
+                return `http://localhost:${port}`;
+            }
+            // RunPod proxy URL format
+            const baseUrl = config.runpodUrl.replace(/-\d+\.proxy/, `-${port}.proxy`);
+            return baseUrl;
+        }
+
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function setStatus(id, status) {
+            const dot = document.getElementById(id);
+            dot.className = `status-dot ${status}`;
+        }
+
+        async function checkService(name, url, statusId) {
+            setStatus(statusId, 'loading');
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (response.ok) {
+                    setStatus(statusId, 'online');
+                    log(`${name}: Online`, 'success');
+                    return true;
+                } else {
+                    setStatus(statusId, 'offline');
+                    log(`${name}: Error ${response.status}`, 'error');
+                    return false;
+                }
+            } catch (e) {
+                setStatus(statusId, 'offline');
+                log(`${name}: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function checkAllServices() {
+            saveConfig();
+            log('Checking all services...', 'info');
+
+            await checkService('TTS', `${getServiceUrl(config.ttsPort)}/health`, 'tts-status');
+            await checkService('Webhook', `${getServiceUrl(config.webhookPort)}/health`, 'webhook-status');
+
+            // Ollama health check
+            try {
+                const ollamaUrl = `${getServiceUrl(config.ollamaPort)}/api/tags`;
+                const response = await fetch(ollamaUrl);
+                if (response.ok) {
+                    setStatus('llm-status', 'online');
+                    log('Ollama: Online', 'success');
+                } else {
+                    setStatus('llm-status', 'offline');
+                    log('Ollama: Error', 'error');
+                }
+            } catch (e) {
+                setStatus('llm-status', 'offline');
+                log(`Ollama: ${e.message}`, 'error');
+            }
+        }
+
+        async function testTTS() {
+            const text = document.getElementById('tts-text').value;
+            const responseBox = document.getElementById('tts-response');
+            const audioPlayer = document.getElementById('tts-audio');
+
+            if (!text) {
+                log('Please enter text for TTS', 'warn');
+                return;
+            }
+
+            log('Generating speech...', 'info');
+            responseBox.style.display = 'block';
+            responseBox.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(`${getServiceUrl(config.ttsPort)}/tts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text, language: 'en' })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const audioUrl = URL.createObjectURL(blob);
+                    audioPlayer.src = audioUrl;
+                    audioPlayer.style.display = 'block';
+                    responseBox.textContent = `Success! Audio generated (${(blob.size / 1024).toFixed(1)} KB)`;
+                    log('TTS: Audio generated successfully', 'success');
+                } else {
+                    const error = await response.text();
+                    responseBox.textContent = `Error: ${error}`;
+                    log(`TTS Error: ${error}`, 'error');
+                }
+            } catch (e) {
+                responseBox.textContent = `Error: ${e.message}`;
+                log(`TTS Error: ${e.message}`, 'error');
+            }
+        }
+
+        async function testLLM() {
+            const prompt = document.getElementById('llm-prompt').value;
+            const responseBox = document.getElementById('llm-response');
+
+            if (!prompt) {
+                log('Please enter a prompt', 'warn');
+                return;
+            }
+
+            log('Querying LLM...', 'info');
+            responseBox.style.display = 'block';
+            responseBox.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(`${getServiceUrl(config.ollamaPort)}/api/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'llama3.1:8b',
+                        prompt: prompt,
+                        stream: false
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    responseBox.textContent = data.response || 'No response';
+                    log('LLM: Response received', 'success');
+                } else {
+                    const error = await response.text();
+                    responseBox.textContent = `Error: ${error}`;
+                    log(`LLM Error: ${error}`, 'error');
+                }
+            } catch (e) {
+                responseBox.textContent = `Error: ${e.message}`;
+                log(`LLM Error: ${e.message}`, 'error');
+            }
+        }
+
+        async function testWebhookHealth() {
+            const responseBox = document.getElementById('webhook-response');
+            responseBox.style.display = 'block';
+            responseBox.textContent = 'Checking...';
+
+            try {
+                const response = await fetch(`${getServiceUrl(config.webhookPort)}/health`);
+                const data = await response.json();
+                responseBox.textContent = JSON.stringify(data, null, 2);
+                log('Webhook: Health check passed', 'success');
+            } catch (e) {
+                responseBox.textContent = `Error: ${e.message}`;
+                log(`Webhook Error: ${e.message}`, 'error');
+            }
+        }
+
+        async function simulateCall() {
+            const responseBox = document.getElementById('webhook-response');
+            responseBox.style.display = 'block';
+            responseBox.textContent = 'Simulating incoming call...';
+
+            try {
+                const response = await fetch(`${getServiceUrl(config.webhookPort)}/voice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'CallSid=TEST123&From=+1234567890&To=+17753777484&CallStatus=ringing'
+                });
+
+                const twiml = await response.text();
+                responseBox.textContent = twiml;
+                log('Webhook: TwiML response received', 'success');
+            } catch (e) {
+                responseBox.textContent = `Error: ${e.message}`;
+                log(`Webhook Error: ${e.message}`, 'error');
+            }
+        }
+
+        async function testFullPipeline() {
+            const text = document.getElementById('pipeline-text').value;
+            const responseBox = document.getElementById('pipeline-response');
+            const audioPlayer = document.getElementById('pipeline-audio');
+
+            if (!text) {
+                log('Please enter text', 'warn');
+                return;
+            }
+
+            log('Testing full pipeline...', 'info');
+            responseBox.style.display = 'block';
+            responseBox.textContent = 'Step 1: Getting LLM response...';
+
+            try {
+                // Step 1: Get LLM response
+                const llmResponse = await fetch(`${getServiceUrl(config.ollamaPort)}/api/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'llama3.1:8b',
+                        prompt: `You are a helpful voice assistant. Keep responses brief. User: ${text}\nAssistant:`,
+                        stream: false,
+                        options: { num_predict: 100 }
+                    })
+                });
+
+                const llmData = await llmResponse.json();
+                const aiText = llmData.response;
+                responseBox.textContent = `LLM Response: ${aiText}\n\nStep 2: Converting to speech...`;
+                log('Pipeline: LLM response received', 'success');
+
+                // Step 2: Convert to speech
+                const ttsResponse = await fetch(`${getServiceUrl(config.ttsPort)}/tts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: aiText, language: 'en' })
+                });
+
+                if (ttsResponse.ok) {
+                    const blob = await ttsResponse.blob();
+                    const audioUrl = URL.createObjectURL(blob);
+                    audioPlayer.src = audioUrl;
+                    audioPlayer.style.display = 'block';
+                    responseBox.textContent = `LLM Response: ${aiText}\n\n✅ Audio generated successfully!`;
+                    log('Pipeline: Full test completed!', 'success');
+                } else {
+                    throw new Error('TTS failed');
+                }
+            } catch (e) {
+                responseBox.textContent = `Error: ${e.message}`;
+                log(`Pipeline Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Chat functions
+        const chatMessages = [];
+
+        function addChatMessage(role, text) {
+            chatMessages.push({ role, text });
+            const container = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+            msgDiv.textContent = text;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            addChatMessage('user', text);
+            log(`User: ${text}`, 'info');
+
+            try {
+                // Get LLM response
+                const response = await fetch(`${getServiceUrl(config.ollamaPort)}/api/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'llama3.1:8b',
+                        prompt: `You are a helpful voice assistant on a phone call. Keep responses brief and conversational.\n\nUser: ${text}\nAssistant:`,
+                        stream: false,
+                        options: { num_predict: 100 }
+                    })
+                });
+
+                const data = await response.json();
+                const aiResponse = data.response;
+                addChatMessage('assistant', aiResponse);
+                log(`Assistant: ${aiResponse.substring(0, 50)}...`, 'success');
+
+                // Generate audio
+                const ttsResponse = await fetch(`${getServiceUrl(config.ttsPort)}/tts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: aiResponse, language: 'en' })
+                });
+
+                if (ttsResponse.ok) {
+                    const blob = await ttsResponse.blob();
+                    const audioUrl = URL.createObjectURL(blob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                }
+            } catch (e) {
+                addChatMessage('assistant', `Error: ${e.message}`);
+                log(`Chat Error: ${e.message}`, 'error');
+            }
+        }
+
+        function clearChat() {
+            document.getElementById('chat-messages').innerHTML = '';
+            chatMessages.length = 0;
+        }
+    </script>
+</body>
+</html>

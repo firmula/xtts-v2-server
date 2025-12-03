@@ -19,7 +19,7 @@ import json
 import wave
 import tempfile
 import requests
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from TTS.api import TTS
 
 app = Flask(__name__)
@@ -72,6 +72,12 @@ def chat_with_llama(message: str, system_prompt: str = None) -> str:
     except requests.exceptions.RequestException as e:
         print(f"Ollama error: {e}")
         return "I'm sorry, I couldn't process that request."
+
+
+@app.route("/", methods=["GET"])
+def index():
+    """Serve the test UI."""
+    return send_from_directory(MODEL_DIR, "test-ui.html")
 
 
 @app.route("/health", methods=["GET"])
