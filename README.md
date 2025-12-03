@@ -90,6 +90,38 @@ XTTS-v2 supports 17 languages:
 - **Size**: ~2GB
 - **Sample Rate**: 24kHz
 
+## RunPod Deployment
+
+### Option 1: Use Pre-built Template
+1. Go to [RunPod Console](https://console.runpod.io)
+2. Click "Deploy" → "GPU Pods"
+3. Select your GPU (RTX 4090/5090 recommended)
+4. Use custom Docker image: `ghcr.io/firmula/xtts-v2-server:latest`
+5. Set exposed port: `5000`
+6. Deploy!
+
+### Option 2: Build Your Own
+```bash
+# Clone the repo
+git clone https://github.com/firmula/xtts-v2-server.git
+cd xtts-v2-server
+
+# Build Docker image
+docker build -t xtts-v2-server .
+
+# Push to your registry
+docker tag xtts-v2-server your-registry/xtts-v2-server
+docker push your-registry/xtts-v2-server
+```
+
+### RunPod Template Settings
+- **Container Image**: `ghcr.io/firmula/xtts-v2-server:latest`
+- **Docker Command**: `python tts_server.py`
+- **Exposed Ports**: `5000`
+- **Environment Variables**:
+  - `PORT=5000`
+  - `LLM_MODEL=llama3.1:8b` (optional, if using Ollama)
+
 ## License
 
 XTTS-v2 model is licensed under [Coqui Public Model License](https://coqui.ai/cpml).
