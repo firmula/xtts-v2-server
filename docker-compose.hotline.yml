@@ -1,0 +1,242 @@
+# =============================================================================
+# COMPLETE HOTLINE STACK FOR RUNPOD
+# =============================================================================
+# This runs the full AI voice hotline:
+# - Jambonz (call handling)
+# - Langflow (AI workflow builder)
+# - XTTS-v2 (Text-to-Speech)
+# - Ollama + Llama 3.1 (LLM)
+# - Whisper (Speech-to-Text)
+#
+# Usage on RunPod:
+#   docker-compose -f docker-compose.hotline.yml up -d
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # DATABASE LAYER
+  # ===========================================================================
+
+  # MySQL for Jambonz
+  mysql:
+    image: mysql:8
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: JambonzR00t!
+      MYSQL_DATABASE: jambones
+      MYSQL_USER: jambones
+      MYSQL_PASSWORD: Jambonz123!
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis for session management
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # PostgreSQL for Langflow
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: langflow
+      POSTGRES_PASSWORD: langflow123
+      POSTGRES_DB: langflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ===========================================================================
+  # AI/ML SERVICES
+  # ===========================================================================
+
+  # Ollama - LLM Server (Llama 3.1)
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    # Pull llama3.1 on first run
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 10 && ollama pull llama3.1:8b && wait"]
+
+  # XTTS-v2 TTS Server
+  xtts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - OLLAMA_URL=http://ollama:11434
+      - LLM_MODEL=llama3.1:8b
+    depends_on:
+      - ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # Whisper ASR Server
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - ASR_MODEL=base
+      - ASR_ENGINE=openai_whisper
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # ===========================================================================
+  # LANGFLOW - AI Workflow Builder
+  # ===========================================================================
+
+  langflow:
+    image: langflowai/langflow:latest
+    ports:
+      - "7860:7860"
+    environment:
+      - LANGFLOW_DATABASE_URL=postgresql://langflow:langflow123@postgres:5432/langflow
+      - LANGFLOW_AUTO_LOGIN=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - langflow_data:/app/langflow
+    restart: unless-stopped
+
+  # ===========================================================================
+  # JAMBONZ - Voice Platform
+  # ===========================================================================
+
+  # Jambonz Feature Server
+  jambonz-feature-server:
+    image: jambonz/feature-server:latest
+    platform: linux/amd64
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - NODE_ENV=production
+      - JAMBONES_MYSQL_HOST=mysql
+      - JAMBONES_MYSQL_USER=jambones
+      - JAMBONES_MYSQL_PASSWORD=Jambonz123!
+      - JAMBONES_MYSQL_DATABASE=jambones
+      - JAMBONES_REDIS_HOST=redis
+      - JAMBONES_LOGLEVEL=debug
+      - HTTP_PORT=3000
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  # Jambonz API Server
+  jambonz-api-server:
+    image: jambonz/api-server:latest
+    platform: linux/amd64
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - NODE_ENV=production
+      - JAMBONES_MYSQL_HOST=mysql
+      - JAMBONES_MYSQL_USER=jambones
+      - JAMBONES_MYSQL_PASSWORD=Jambonz123!
+      - JAMBONES_MYSQL_DATABASE=jambones
+      - JAMBONES_REDIS_HOST=redis
+      - HTTP_PORT=3001
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+  # Jambonz Web App (Dashboard)
+  jambonz-webapp:
+    image: jambonz/webapp:latest
+    platform: linux/amd64
+    ports:
+      - "3002:3000"
+    environment:
+      - API_BASE_URL=http://jambonz-api-server:3001
+    depends_on:
+      - jambonz-api-server
+    restart: unless-stopped
+
+  # ===========================================================================
+  # WEBHOOK SERVER - Connects everything
+  # ===========================================================================
+
+  hotline-webhook:
+    build:
+      context: ./webhook
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - TTS_URL=http://xtts:5000
+      - ASR_URL=http://whisper:9000
+      - LLM_URL=http://ollama:11434
+      - LANGFLOW_URL=http://langflow:7860
+    depends_on:
+      - xtts
+      - whisper
+      - ollama
+      - langflow
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
+  postgres_data:
+  ollama_data:
+  langflow_data:
+
+# =============================================================================
+# PORTS SUMMARY (Expose these in RunPod):
+# =============================================================================
+# 3000  - Jambonz Feature Server
+# 3001  - Jambonz API Server
+# 3002  - Jambonz Web Dashboard
+# 5000  - XTTS-v2 TTS Server
+# 7860  - Langflow UI
+# 8080  - Hotline Webhook Server
+# 9000  - Whisper ASR Server
+# 11434 - Ollama LLM Server
+# =============================================================================
