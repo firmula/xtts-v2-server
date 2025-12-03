@@ -1,0 +1,29 @@
+# Model files (too large for GitHub - download from HuggingFace)
+*.pth
+*.pt
+*.bin
+*.safetensors
+
+# Cache
+.cache/
+__pycache__/
+*.pyc
+
+# Environment
+.env
+.env.local
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Audio output
+*.wav
+*.mp3
+output/

@@ -1,0 +1,6 @@
+TTS>=0.22.0
+torch>=2.0.0
+torchaudio>=2.0.0
+huggingface_hub>=0.20.0
+flask>=3.0.0
+requests>=2.31.0
